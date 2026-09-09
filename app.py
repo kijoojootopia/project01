@@ -104,7 +104,7 @@ null_df = pd.DataFrame(
     {
         "컬럼": null_counts.index,
         "결측치 수": null_counts.values,
-        "결측률(%)": (null_counts.values / len(baci_raw) * 100).round(2),
+        "결측률(%)": (null_counts.values / len(trade_df) * 100).round(2),
     }
 )
 st.dataframe(null_df, use_container_width=True, hide_index=True)
