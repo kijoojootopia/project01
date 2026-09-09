@@ -121,7 +121,7 @@ with chart_col1:
         fill_value=0
     )
     fig1, ax1 = plt.subplots(figsize=(6, 4))
-    sns.heatmap(heatmap_data, cmap=yellow_cmap, ax=ax1, cbar_kws={'label': '수출액'})
+    sns.heatmap(heatmap_data, cmap="Blues" ax=ax1, cbar_kws={'label': '수출액'})
     ax1.set_xlabel("연도")
     ax1.set_ylabel("국가")
     st.pyplot(fig1)
