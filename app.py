@@ -65,7 +65,7 @@ def load_data():
     code_to_name = dict(zip(country_df['clean_code'], country_df[name_col]))
     
     # 5) 국가명 치환 (매핑 실패 시에만 원본 코드 유지)
-    trade_df['country_name'] = trade_df['clean_i'].map(code_to_name).fillna(trade_df['i'].astype(str))
+    trade_df['country_name'] = trade_df['clean_j'].map(code_to_name).fillna(trade_df['j'].astype(str))
     
     # 무역액 등급 (대, 중, 소)
     trade_df['무역액등급'] = pd.qcut(
