@@ -108,7 +108,7 @@ st.divider()
 
 # 4. 국가*연도 히트맵 & 등급 분포
 chart_col1, chart_col2 = st.columns(2)
-yellow_cmap = sns.light_palette("#FFFF00", as_cmap=True)
+
 
 with chart_col1:
     st.subheader("상위 8개국 국가*연도 수출액 히트맵")
