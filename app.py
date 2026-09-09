@@ -130,7 +130,7 @@ with chart_col2:
     st.subheader("무역액 등급 분포")
     tier_counts = filtered_df['무역액등급'].value_counts().reindex(['소', '중', '대']).fillna(0)
     fig2, ax2 = plt.subplots(figsize=(6, 4))
-    ax2.bar(tier_counts.index, tier_counts.values, color="#FFFF00", edgecolor="#888800")
+    ax2.bar(tier_counts.index, tier_counts.values, color="Skyblue", edgecolor="#F5F5D2")
     ax2.set_xlabel("무역액 등급")
     ax2.set_ylabel("건수")
     st.pyplot(fig2)
