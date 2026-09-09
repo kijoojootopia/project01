@@ -3,11 +3,12 @@
 baci_85_sample.csv
 country_codes_sample.csv 사용
 
-한글지원 해줘
+한글지원 해줘 폰트는 나눔고딕으로 통일
 오른쪽 화면에
+차트, 슬라이더 색깔은 #FFFF00으로 통일해
 
 1. 타이틀 : 무역 분석 대시보드
-2. 총액 baci_85_sample.csv 파일 결측치
+2. baci_85_sample.csv 파일 결측치
  총 거래 건수 보이게
 3. 총 거래 건수        총 수출액(달러)
 
