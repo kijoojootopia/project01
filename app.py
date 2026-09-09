@@ -92,10 +92,22 @@ filtered_df = trade_df[
 # 1. 타이틀
 st.title("무역 분석 대시보드")
 
-# 2. 결측치 및 전체 거래 건수
-col1, col2 = st.columns(2)
-col1.metric("전체 결측치 수", f"{trade_df.isnull().sum().sum():,} 개")
-col2.metric("전체 거래 건수", f"{len(trade_df):,} 건")
+# # 2. 결측치 및 전체 거래 건수
+# col1, col2 = st.columns(2)
+
+# col2.metric("전체 거래 건수", f"{len(trade_df):,} 건")
+
+# 2. 결측치 현황
+st.subheader("1. 데이터 결측치 현황 (baci_85_sample.csv)")
+null_counts = baci_raw.isnull().sum()
+null_df = pd.DataFrame(
+    {
+        "컬럼": null_counts.index,
+        "결측치 수": null_counts.values,
+        "결측률(%)": (null_counts.values / len(baci_raw) * 100).round(2),
+    }
+)
+st.dataframe(null_df, use_container_width=True, hide_index=True)
 
 st.divider()
 
