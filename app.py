@@ -12,27 +12,23 @@ st.set_page_config(page_title="무역 분석 대시보드", layout="wide")
 plt.rcParams['font.family'] = 'NanumGothic'
 plt.rcParams['axes.unicode_minus'] = False
 
-# Streamlit 기본 primaryColor(빨간색 등)를 #FFFF00 계열로 덮어쓰기
 st.markdown(
     """
     <style>
     html, body, [class*="css"] {
         font-family: 'NanumGothic', sans-serif;
     }
-    /* 사이드바 multiselect 태그 및 포커스 색상 */
+    /* 사이드바 multiselect 선택 태그 노란색 적용 */
     span[data-baseweb="tag"] {
         background-color: #FFFF00 !important;
         color: #000000 !important;
     }
-    /* 체크박스, 라디오, 슬라이더 기본 테마 색상 덮어쓰기 */
-    :root {
-        --primary-color: #FFFF00;
-    }
-    div[data-baseweb="select"] * {
-        border-color: #FFFF00 !important;
-    }
+    /* 슬라이더 색상 #FFFF00 */
     div[data-baseweb="slider"] div {
         color: #FFFF00 !important;
+    }
+    .stSlider [data-testid="stThumbValue"] {
+        color: #000000 !important;
     }
     </style>
     """,
@@ -40,40 +36,28 @@ st.markdown(
 )
 
 # ---------------------------------------------------------
-# 2. 데이터 불러오기 및 전처리 (국가 코드 매핑 보정)
+# 2. 데이터 불러오기 및 결합 (j 기준 merge)
 # ---------------------------------------------------------
 @st.cache_data
 def load_data():
     trade_df = pd.read_csv("baci_85_sample.csv")
     country_df = pd.read_csv("country_codes_sample.csv")
     
-    # 1) country_df의 컬럼명 공백 제거 및 소문자 통일
-    country_df.columns = [c.strip().lower() for c in country_df.columns]
+    # 공백 제거
+    trade_df.columns = trade_df.columns.str.strip()
+    country_df.columns = country_df.columns.str.strip()
     
-    # 2) 코드 컬럼 찾기 (code, id, i, c 중 포함된 컬럼 자동 탐색)
-    code_candidates = [c for c in country_df.columns if any(k in c for k in ['code', 'id', 'i', 'num'])]
-    name_candidates = [c for c in country_df.columns if any(k in c for k in ['name', 'country', 'desc'])]
+    # j 컬럼 기준으로 국가명 병합
+    merged_df = pd.merge(trade_df, country_df[['j', 'country_name']], on='j', how='left')
+    merged_df['country_name'] = merged_df['country_name'].fillna(merged_df['j'].astype(str))
     
-    code_col = code_candidates[0] if code_candidates else country_df.columns[0]
-    name_col = name_candidates[0] if name_candidates else country_df.columns[1]
-    
-    # 3) 데이터 타입 통일 (정수형 변환 후 문자열 변환하여 공백/소수점 오차 방지)
-    country_df['clean_code'] = pd.to_numeric(country_df[code_col], errors='coerce').fillna(-1).astype(int).astype(str)
-    trade_df['clean_i'] = pd.to_numeric(trade_df['i'], errors='coerce').fillna(-1).astype(int).astype(str)
-    
-    # 4) 매핑 딕셔너리 생성
-    code_to_name = dict(zip(country_df['clean_code'], country_df[name_col]))
-    
-    # 5) 국가명 치환 (매핑 실패 시에만 원본 코드 유지)
-    trade_df['country_name'] = trade_df['clean_j'].map(code_to_name).fillna(trade_df['j'].astype(str))
-    
-    # 무역액 등급 (대, 중, 소)
-    trade_df['무역액등급'] = pd.qcut(
-        trade_df['v'], 
+    # 무역액 등급 (대, 중, 소) 범주화
+    merged_df['무역액등급'] = pd.qcut(
+        merged_df['v'], 
         q=[0, 0.33, 0.66, 1.0], 
         labels=['소', '중', '대']
     )
-    return trade_df
+    return merged_df
 
 trade_df = load_data()
 
@@ -90,8 +74,13 @@ selected_countries = st.sidebar.multiselect(
 )
 
 tier_options = ['소', '중', '대']
-selected_tiers = st.sidebar.multiselect("무역액 등급 선택", options=tier_options, default=tier_options)
+selected_tiers = st.sidebar.multiselect(
+    "무역액 등급 선택", 
+    options=tier_options, 
+    default=tier_options
+)
 
+# 필터 적용
 filtered_df = trade_df[
     (trade_df['country_name'].isin(selected_countries)) &
     (trade_df['무역액등급'].isin(selected_tiers))
@@ -100,20 +89,24 @@ filtered_df = trade_df[
 # ---------------------------------------------------------
 # 4. 메인 화면
 # ---------------------------------------------------------
+# 1. 타이틀
 st.title("무역 분석 대시보드")
 
+# 2. 결측치 및 전체 거래 건수
 col1, col2 = st.columns(2)
 col1.metric("전체 결측치 수", f"{trade_df.isnull().sum().sum():,} 개")
 col2.metric("전체 거래 건수", f"{len(trade_df):,} 건")
 
 st.divider()
 
+# 3. 필터 적용 건수 및 총 수출액
 col3, col4 = st.columns(2)
 col3.metric("총 거래 건수", f"{len(filtered_df):,} 건")
 col4.metric("총 수출액(달러)", f"${filtered_df['v'].sum():,.2f}")
 
 st.divider()
 
+# 4. 국가*연도 히트맵 & 등급 분포
 chart_col1, chart_col2 = st.columns(2)
 yellow_cmap = sns.light_palette("#FFFF00", as_cmap=True)
 
@@ -144,6 +137,7 @@ with chart_col2:
 
 st.divider()
 
+# 5. 상위 5개국 * 무역액 등급 교차표
 st.subheader("상위 5개국 * 무역액 등급 교차표")
 top_5 = trade_df.groupby('country_name')['v'].sum().nlargest(5).index
 top_5_df = trade_df[trade_df['country_name'].isin(top_5)]
